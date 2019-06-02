@@ -31,6 +31,12 @@ QNode::QNode(int argc, char** argv )
     : init_argc(argc), init_argv(argv)
 {
     orignal_I.init(540,960);
+    vp_blob_init_done = false;
+#if defined(VISP_HAVE_X11)
+//    vpDisplayX d(orignal_I, vpDisplay::SCALE_AUTO);
+#elif defined(VISP_HAVE_GDI)
+    vpDisplayGDI d(orignal_I, vpDisplay::SCALE_AUTO);
+#endif
 }
 
 QNode::~QNode()
@@ -99,18 +105,27 @@ void QNode::myCallback_img(const sensor_msgs::ImageConstPtr &msg)
         cv_ptrRGB = cv_bridge::toCvCopy(msg);
         img = cv_ptrRGB->image;
         image = QImage(img.data,img.cols,img.rows,img.step[0],QImage::Format_RGB888);//change  to QImage format
-        qDebug() << " " << img.rows << " " << img.cols;
-        // cv mat to vpImage
-        for (int x = 0; x < img.rows; x++) {
-            for (int y = 0; y < img.cols; y++) {
-               if(img.channels() == 3)
-               {
-                    orignal_I.bitmap[x*960 + y] = 0.299 * img.at<cv::Vec3b>(x,y)[0] + 0.587 * img.at<cv::Vec3b>(x,y)[1] + 0.114 * img.at<cv::Vec3b>(x,y)[2];
-               }
+
+        vpImageConvert::convert(img, orignal_I);
+
+        if (!vp_blob_init_done) {
+            vpDisplay::displayText(orignal_I, vpImagePoint(10, 10), "Click in the blob to initialize the tracker", vpColor::green);
+            if (vpDisplay::getClick(orignal_I, germ, false)) {
+            blob.initTracking(orignal_I, germ);
+            vp_blob_init_done = true;
             }
         }
+        else {
+            blob.track(orignal_I);
+        }
 
+//        vpDisplay::setTitle(orignal_I, "My image");
+//        vpDisplay::display(orignal_I);
+//        //vpDisplay::displayPoint(I, I.getHeight() / 2, I.getWidth() / 2, vpColor::red, 2);
+//        vpDisplay::flush(orignal_I);
 
+        vpImageConvert::convert(orignal_I,vpimg);
+        vpimage = QImage(vpimg.data,vpimg.cols,vpimg.rows,QImage::Format_Indexed8);//change  to QImage format
         Q_EMIT loggingCamera();
         cv::waitKey(100);
     }
@@ -128,24 +143,24 @@ void QNode::myCallback_depth(const sensor_msgs::ImageConstPtr &msg)
     {
         cv_ptrDEPTH = cv_bridge::toCvCopy(msg);
         dph = cv_ptrDEPTH->image;
-
-       short max_depth;
+//        depthnearestFiltering(dph);
+       unsigned short max_depth;
 
        uchar p_depth_argb[424*512*4];
        int idx = 0;
         //find depth max
        for (int x = 0; x < dph.rows; x++) {
            for (int y = 0; y < dph.cols; y++) {
-                if(dph.at<short>(x,y) > max_depth)
-                    max_depth = dph.at<short>(x,y);
+                if(dph.at<unsigned short>(x,y) > max_depth)
+                    max_depth = dph.at<unsigned short>(x,y);
            }
        }
 
        for (int x = 0; x < dph.rows; x++) {
            for (int y = 0; y < dph.cols; y++) {
        //一定要使用1.0f相乘，转换成float类型，否则该工程的结果会有错误,因为这个要么是0，要么是1，0的概率要大很多
-                   float fscale = 1.0f*(dph.at<short>(x,y))/max_depth;
-                   if(dph.at<short>(x,y) != 0) {
+                   float fscale = 1.0f*(dph.at<unsigned short>(x,y))/max_depth;
+                   if(dph.at<unsigned short>(x,y) != 0) {
                        p_depth_argb[idx++] = 255*(1-fscale);    //蓝色分量
                        p_depth_argb[idx++] = 0; //绿色分量
                        p_depth_argb[idx++] = 255*fscale
@@ -169,6 +184,80 @@ void QNode::myCallback_depth(const sensor_msgs::ImageConstPtr &msg)
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
+}
+
+void QNode::depthnearestFiltering(cv::Mat & depthSrc)
+{
+    CvPoint topLeft;
+    CvPoint downRight;
+    cv::Mat tempImage;
+    depthSrc.copyTo(tempImage);
+
+    CvRect image_ROI(80, 60, 350,250);
+
+//    qDebug() << depthSrc.cols << " " << depthSrc.rows << " " << image_ROI.width << " " << image_ROI.height << " " ;
+    for(int i = image_ROI.y; i < image_ROI.y + image_ROI.height; i++)
+    {
+        unsigned short* pix_data = (unsigned short*)(depthSrc.data + depthSrc.cols *i);
+        for (int j = image_ROI.x; j < image_ROI.x + image_ROI.width; j++) {
+            for (int k = 1; pix_data[j] == 0; k++) {
+                topLeft = cvPoint(j - k, i - k);
+                downRight = cvPoint(j + k, i + k);
+                // 左上点和右下点
+                // (j-k,i-k) ( j ,i-k) (j+k,i-k)
+                // (j-k, i ) ( j , i ) (j+k, i )
+                // (j-k,i+k) ( j ,i+k) (j+k,i+k)
+                /********************************************************/
+                for (int m = topLeft.x; (m <= downRight.x)&&(pix_data[j] == 0); m++) {
+                    if(m < 0) continue;
+                    if(m >= image_ROI.width) break;
+                    if(topLeft.y >= 0){
+                        unsigned short temp = tempImage.at<unsigned short>(m,downRight.x);
+                        if(temp > 0)
+                        {
+                            pix_data[j] = temp;
+                            break;
+                        }
+                    }
+                    if (downRight.y < image_ROI.height)
+                    {
+                        // 获取中心点(j,i)右下角(downRight.y,m)位置数据
+                        unsigned short temp = tempImage.at<unsigned short>(downRight.y, m);
+                        if (temp > 0)
+                        {
+                            pix_data[j] = temp;
+                            break;
+                        }
+                    }
+                }
+
+                for (int m = topLeft.y; (m<downRight.y) && (pix_data[j] == 0); m++) {
+                    if (m<0) continue;
+                    if (m >= image_ROI.height) break;
+                    if (topLeft.x>0)
+                    {
+                        unsigned short temp = tempImage.at<unsigned short>(m, topLeft.x);
+                        if (temp > 0)
+                        {
+                            pix_data[j] = temp;
+                            break;
+                        }
+                    }
+                    if (downRight.x< image_ROI.width)
+                    {
+                        unsigned short temp = tempImage.at<unsigned short>(m, downRight.x);
+                        if (temp > 0)
+                        {
+                            pix_data[j] = temp;
+                            break;
+                        }
+                    }
+                }
+                /********************************************************/
+            }
+        }
+    }
+    tempImage.release();
 }
 
 void QNode::run()

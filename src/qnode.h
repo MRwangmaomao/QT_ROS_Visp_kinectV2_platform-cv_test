@@ -40,8 +40,7 @@
 #include <visp3/gui/vpDisplayGDI.h>
 #include <visp3/gui/vpDisplayOpenCV.h>
 #include <visp3/vision/vpPose.h>
-
-
+//#include <visp3/gui/vpDisplayX.h>
 
 /*****************************************************************************
 ** Namespaces
@@ -57,6 +56,7 @@ class QNode : public QThread
     Q_OBJECT
 public:
     QImage image;
+    QImage vpimage;
     QImage depth;
     vpImage<unsigned char> orignal_I;
 
@@ -92,6 +92,8 @@ public:
         {return &logging_listen;}
     void log_listen(const LogLevel &level, const std::string &msg);
 
+    void depthnearestFiltering(cv::Mat & depthSrc);
+
 Q_SIGNALS:
     void loggingUpdated();
     void loggingListen();
@@ -103,13 +105,17 @@ private:
     char** init_argv;
     cv::Mat img;
     cv::Mat dph;
+    cv::Mat vpimg;
     ros::Publisher chatter_publisher;
     ros::Subscriber chatter_subscriber;
     //image_transport::Subscriber img_qhd_subscriber;
     image_transport::Subscriber img_qhd_depth_subscriber;
     QStringListModel logging_model;
     QStringListModel logging_listen;
-
+    bool vp_blob_init_done;
+    vpImagePoint germ;
+    vpDot2 blob; //2D
+//    vpDisplayX d;
 };
 
 }  // namespace test_gui

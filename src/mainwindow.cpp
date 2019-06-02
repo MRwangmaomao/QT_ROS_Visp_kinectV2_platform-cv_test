@@ -11,6 +11,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent):
     qnode(argc, argv)
 {
     ui->setupUi(this);
+
     QObject::connect(&qnode, SIGNAL(rosShutdown()), this, SLOT(close()));
 
     QObject::connect(&qnode,&QNode::loggingCamera,this,&MainWindow::updateLogcamera);
@@ -25,12 +26,15 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::displayCamera(const QImage &image)
+void MainWindow::displayCamera(const QImage &image, const QImage &vpimage)
 {
     qimage_mutex_.lock();
     qimage_ = image.copy();
     ui->label_image->setPixmap(QPixmap::fromImage(qimage_));
     ui->label_image->resize(ui->label_image->pixmap()->size());
+    qvpimage_ = vpimage.copy();
+    ui->label_Visp->setPixmap(QPixmap::fromImage(qvpimage_));
+    ui->label_Visp->resize(ui->label_Visp->pixmap()->size());
     qimage_mutex_.unlock();
 }
 
@@ -46,13 +50,12 @@ void MainWindow::displayDepthCamera(const QImage &depth)
 
 void MainWindow::updateLogcamera()
 {
-    displayCamera(qnode.image);
+    displayCamera(qnode.image, qnode.vpimage);
 }
 
 void MainWindow::updateLogDepthcamera()
 {
     displayDepthCamera(qnode.depth);
-//    qDebug()<<"I receive depth image!";
 }
 
 void MainWindow::on_pushButtonConnect_clicked()

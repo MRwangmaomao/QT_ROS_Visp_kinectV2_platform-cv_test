@@ -24,7 +24,7 @@ public:
     explicit MainWindow(int argc, char** argv, QWidget *parent = nullptr);
     ~MainWindow();
 
-    void displayCamera(const QImage& image);//added
+    void displayCamera(const QImage& image, const QImage& vpimage);//added
     void displayDepthCamera(const QImage &image);
 
     QGraphicsPixmapItem *g_depth_map;
@@ -40,6 +40,7 @@ private:
     Ui::MainWindow *ui;
     QNode qnode;
     QImage qimage_;//added
+    QImage qvpimage_;//added
     mutable QMutex qimage_mutex_;//added
 
     QImage qdepth_;//added

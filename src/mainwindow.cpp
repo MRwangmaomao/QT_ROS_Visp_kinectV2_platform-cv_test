@@ -12,11 +12,27 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent):
 {
     ui->setupUi(this);
 
+    ui->CBCalibration->clear();
+    ui->CBdetection->clear();
+    ui->CBtracking->clear();
+
+    ui->CBCalibration->addItem("IndexParam");
+    ui->CBCalibration->addItem("ExternParam");
+    ui->CBtracking->addItem("Blob");
+    ui->CBtracking->addItem("Model-Based");
+    ui->CBdetection->addItem("QBar");
+    ui->CBdetection->addItem("tBox");
+
+    ui->pushButtonCalibration->setStyleSheet("background-color: rgb(175,238,238)");
+    ui->pushButtonTracking->setStyleSheet("background-color: rgb(255,255,255)");
+    ui->pushButtonDetection->setStyleSheet("background-color: rgb(255,255,255)");
+
     QObject::connect(&qnode, SIGNAL(rosShutdown()), this, SLOT(close()));
 
     QObject::connect(&qnode,&QNode::loggingCamera,this,&MainWindow::updateLogcamera);
 
     QObject::connect(&qnode,&QNode::loggingDepthCamera,this,&MainWindow::updateLogDepthcamera);
+
 
 
 }
@@ -65,4 +81,58 @@ void MainWindow::on_pushButtonConnect_clicked()
 
 void MainWindow::on_pushButtonKinect_clicked()
 {
+    qnode.saveimage();
+    qDebug() << "save image";
+}
+
+void MainWindow::on_pushButtonCalibration_clicked()
+{
+    ui->pushButtonCalibration->setStyleSheet("background-color: rgb(175,238,238)");
+    ui->pushButtonTracking->setStyleSheet("background-color: rgb(255,255,255)");
+    ui->pushButtonDetection->setStyleSheet("background-color: rgb(255,255,255)");
+    QString string=ui->CBCalibration->currentText();
+    if(string == "IndexParam"){
+        qnode.setMode(qnode.Calib_Index);
+    }
+    else if(string == "ExternParam"){
+        qnode.setMode(qnode.Calib_Extern);
+    }
+    else {
+
+    }
+
+}
+
+void MainWindow::on_pushButtonTracking_clicked()
+{
+    ui->pushButtonTracking->setStyleSheet("background-color: rgb(175,238,238)");
+    ui->pushButtonCalibration->setStyleSheet("background-color: rgb(255,255,255)");
+    ui->pushButtonDetection->setStyleSheet("background-color: rgb(255,255,255)");
+    QString string=ui->CBtracking->currentText();
+    if(string == "Blob"){
+        qnode.setMode(qnode.Track_Blob);
+    }
+    else if(string == "Model-Based"){
+        qnode.setMode(qnode.Track_Model_Based);
+    }
+    else {
+
+    }
+}
+
+void MainWindow::on_pushButtonDetection_clicked()
+{
+    ui->pushButtonDetection->setStyleSheet("background-color: rgb(175,238,238)");
+    ui->pushButtonTracking->setStyleSheet("background-color: rgb(255,255,255)");
+    ui->pushButtonCalibration->setStyleSheet("background-color: rgb(255,255,255)");
+    QString string=ui->CBdetection->currentText();
+    if(string == "QBar"){
+        qnode.setMode(qnode.Detec_Qbar);
+    }
+    else if(string == "tBox"){
+        qnode.setMode(qnode.Detec_TBox);
+    }
+    else {
+
+    }
 }

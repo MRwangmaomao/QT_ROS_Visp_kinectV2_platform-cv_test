@@ -32,6 +32,9 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <boost/bind/bind.hpp>
 
+#include "calibration.h"
+#include "visionalgorithm.h"
+
 #include <visp3/core/vpImage.h>
 #include <visp3/imgproc/vpImgproc.h>
 #include <visp3/blob/vpDot2.h>
@@ -81,6 +84,18 @@ public:
         Fatal
     };
 
+    enum ModeFunc
+    {
+        Calib_Index,
+        Calib_Extern,
+        Detec_Qbar,
+        Detec_TBox,
+        Track_Blob,
+        Track_Model_Based
+    };
+
+    void setMode(uchar);
+
     QStringListModel* loggingModel()
         {return &logging_model;}
     void log( const LogLevel &level, const std::string &msg);
@@ -93,6 +108,11 @@ public:
     void log_listen(const LogLevel &level, const std::string &msg);
 
     void depthnearestFiltering(cv::Mat & depthSrc);
+
+    void saveimage();
+
+    void calibrationExt();
+
 
 Q_SIGNALS:
     void loggingUpdated();
@@ -115,6 +135,7 @@ private:
     bool vp_blob_init_done;
     vpImagePoint germ;
     vpDot2 blob; //2D
+    uchar function_mode;
 //    vpDisplayX d;
 };
 

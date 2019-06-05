@@ -36,6 +36,12 @@ private slots:
     void updateLogcamera();//added
     void updateLogDepthcamera();
 
+    void on_pushButtonCalibration_clicked();
+
+    void on_pushButtonTracking_clicked();
+
+    void on_pushButtonDetection_clicked();
+
 private:
     Ui::MainWindow *ui;
     QNode qnode;

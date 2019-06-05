@@ -1,4 +1,4 @@
-﻿/**
+﻿ /**
  * @file /src/qnode.cpp
  *
  * @brief Ros communication central!
@@ -32,6 +32,7 @@ QNode::QNode(int argc, char** argv )
 {
     orignal_I.init(540,960);
     vp_blob_init_done = false;
+    function_mode = 0;
 #if defined(VISP_HAVE_X11)
 //    vpDisplayX d(orignal_I, vpDisplay::SCALE_AUTO);
 #elif defined(VISP_HAVE_GDI)
@@ -49,11 +50,9 @@ QNode::~QNode()
     wait();
 }
 
-
-
 bool QNode::init()
 {
-    ros::init(init_argc,init_argv,"test_gui");
+    ros::init(init_argc,init_argv,"gui_cv");
     if (!ros::master::check())
     {
         return false;
@@ -92,6 +91,16 @@ bool QNode::init(const std::string &master_url, const std::string &host_url)
     return true;
 }
 
+void QNode::setMode(uchar mode)
+{
+    function_mode = mode;
+    qDebug() << function_mode;
+}
+
+void QNode::saveimage(){
+    cv::imwrite("~/code/1.jpg",dph);
+}
+
 void QNode::RecvTopicCallback(const std_msgs::StringConstPtr &msg)
 {
      log_listen(Info, std::string("I heard: ")+msg->data.c_str());
@@ -108,16 +117,40 @@ void QNode::myCallback_img(const sensor_msgs::ImageConstPtr &msg)
 
         vpImageConvert::convert(img, orignal_I);
 
-        if (!vp_blob_init_done) {
-            vpDisplay::displayText(orignal_I, vpImagePoint(10, 10), "Click in the blob to initialize the tracker", vpColor::green);
-            if (vpDisplay::getClick(orignal_I, germ, false)) {
-            blob.initTracking(orignal_I, germ);
-            vp_blob_init_done = true;
-            }
+        visionalgorithm visionalg(orignal_I);
+
+        switch(function_mode){
+            case Calib_Index:
+
+                break;
+            case Calib_Extern:
+
+                break;
+            case Detec_Qbar:
+                visionalg.bar_code_detection();
+                break;
+            case Detec_TBox:
+                visionalg.detection_object_mbt();
+                break;
+            case Track_Blob:
+
+                break;
+            case Track_Model_Based:
+
+                break;
+            default:
+                break;
         }
-        else {
-            blob.track(orignal_I);
-        }
+//        if (!vp_blob_init_done) {
+//            vpDisplay::displayText(orignal_I, vpImagePoint(10, 10), "Click in the blob to initialize the tracker", vpColor::green);
+//            if (vpDisplay::getClick(orignal_I, germ, false)) {
+//            blob.initTracking(orignal_I, germ);
+//            vp_blob_init_done = true;
+//            }
+//        }
+//        else {
+//            blob.track(orignal_I);
+//        }
 
 //        vpDisplay::setTitle(orignal_I, "My image");
 //        vpDisplay::display(orignal_I);
@@ -143,6 +176,7 @@ void QNode::myCallback_depth(const sensor_msgs::ImageConstPtr &msg)
     {
         cv_ptrDEPTH = cv_bridge::toCvCopy(msg);
         dph = cv_ptrDEPTH->image;
+
 //        depthnearestFiltering(dph);
        unsigned short max_depth;
 
@@ -273,6 +307,10 @@ void QNode::run()
     loop_rate.sleep();
     std::cout << "Ros shutdown, proceeding to close the gui." << std::endl;
     Q_EMIT rosShutdown(); // used to signal the gui for a shutdown (useful to roslaunch)
+}
+
+void QNode::calibrationExt()
+{
 
 }
 
@@ -361,3 +399,4 @@ void QNode::log_listen(const LogLevel &level, const std::string &msg)
 }
 
 }  // namespace test_gui
+

@@ -29,6 +29,7 @@ set(SOURCES
   src/mainwindow.cpp
   src/qnode.cpp
   src/display_node.cpp
+  src/visionalgorithm.cpp
 )
 
 set(FORMS

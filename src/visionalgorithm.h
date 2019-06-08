@@ -11,6 +11,9 @@
 #include <visp3/vision/vpPose.h>
 #include <visp3/detection/vpDetectorQRCode.h>
 #include <visp3/detection/vpDetectorDataMatrixCode.h>
+#include <visp3/detection/vpDetectorAprilTag.h>
+#include <visp3/core/vpXmlParserCamera.h>
+
 //#include <visp3/gui/vpDisplayX.h>
 
 #include <opencv2/core/core.hpp>
@@ -24,10 +27,13 @@
 class visionalgorithm
 {
 public:
-    visionalgorithm(vpImage<unsigned char> &src);
+    visionalgorithm(vpImage<unsigned char> &vp_src, cv::Mat &img_src);
     void bar_code_detection();
     void detection_object_mbt();
-    vpImage<unsigned char> I;
+    void aprilTagDetection();
+    vpImage<unsigned char> &I;
+    cv::Mat &img;
+    vpCameraParameters cam;
 };
 
 #endif // VISIONALGORITHM_H

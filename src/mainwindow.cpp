@@ -22,6 +22,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent):
     ui->CBtracking->addItem("Model-Based");
     ui->CBdetection->addItem("QBar");
     ui->CBdetection->addItem("tBox");
+    ui->CBdetection->addItem("AprilTag");
 
     ui->pushButtonCalibration->setStyleSheet("background-color: rgb(175,238,238)");
     ui->pushButtonTracking->setStyleSheet("background-color: rgb(255,255,255)");
@@ -92,6 +93,7 @@ void MainWindow::on_pushButtonCalibration_clicked()
     ui->pushButtonDetection->setStyleSheet("background-color: rgb(255,255,255)");
     QString string=ui->CBCalibration->currentText();
     if(string == "IndexParam"){
+        system("gnome-terminal -x zsh -c 'rosrun camera_calibration cameracalibrator.py --size 8x6 --square 0.024 image:=/kinect2/qhd/image_color  limited:=true'&");
         qnode.setMode(qnode.Calib_Index);
     }
     else if(string == "ExternParam"){
@@ -129,10 +131,21 @@ void MainWindow::on_pushButtonDetection_clicked()
     if(string == "QBar"){
         qnode.setMode(qnode.Detec_Qbar);
     }
+
     else if(string == "tBox"){
         qnode.setMode(qnode.Detec_TBox);
     }
+
+    else if(string == "AprilTag"){
+        qnode.setMode(qnode.Detec_april_tag);
+    }
+
     else {
 
     }
+}
+
+void MainWindow::on_pushButtonKinectV2_clicked()
+{
+    system("gnome-terminal -x zsh -c 'source ~/catkin_kinect/devel/setup.zsh;roslaunch kinect2_bridge kinect2_bridge.launch limited:=true'&");
 }

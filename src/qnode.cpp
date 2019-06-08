@@ -28,16 +28,11 @@ namespace test_gui
 ** Implementation
 *****************************************************************************/
 QNode::QNode(int argc, char** argv )
-    : init_argc(argc), init_argv(argv)
+    : init_argc(argc), init_argv(argv),img_topic("/kinect2/qhd/image_color"),depth_topic("/kinect2/sd/image_depth")
 {
     orignal_I.init(540,960);
     vp_blob_init_done = false;
     function_mode = 0;
-#if defined(VISP_HAVE_X11)
-//    vpDisplayX d(orignal_I, vpDisplay::SCALE_AUTO);
-#elif defined(VISP_HAVE_GDI)
-    vpDisplayGDI d(orignal_I, vpDisplay::SCALE_AUTO);
-#endif
 }
 
 QNode::~QNode()
@@ -61,7 +56,7 @@ bool QNode::init()
     ros::NodeHandle n;
     image_transport::ImageTransport it(n);
     image_transport::Subscriber image_sub;
-    image_sub = it.subscribe("/kinect2/qhd/image_color",1,&QNode::myCallback_img,this);
+    image_sub = it.subscribe(img_topic,1,&QNode::myCallback_img,this);
     image_transport::Subscriber depth_sub;
     depth_sub = it.subscribe("/kinect2/sd/image_depth",1,&QNode::myCallback_depth,this);
     start();
@@ -84,11 +79,26 @@ bool QNode::init(const std::string &master_url, const std::string &host_url)
     ros::NodeHandle n;
     image_transport::ImageTransport it(n);
     image_transport::Subscriber image_sub;
-    image_sub = it.subscribe("/kinect2/qhd/image_color",1,&QNode::myCallback_img,this);
+    image_sub = it.subscribe(img_topic,1,&QNode::myCallback_img,this);
     image_transport::Subscriber depth_sub;
     depth_sub = it.subscribe("/kinect2/sd/image_depth",1,&QNode::myCallback_depth,this);
     start();
     return true;
+}
+
+void QNode::run()
+{
+    ros::Rate loop_rate(1);
+    ros::NodeHandle n;
+    image_transport::ImageTransport it(n);
+    image_transport::Subscriber image_sub;
+    image_sub = it.subscribe(img_topic,1,&QNode::myCallback_img,this);
+    image_transport::Subscriber depth_sub;
+    depth_sub = it.subscribe("/kinect2/sd/image_depth",1,&QNode::myCallback_depth,this);
+    ros::spin();
+    loop_rate.sleep();
+    std::cout << "Ros shutdown, proceeding to close the gui." << std::endl;
+    Q_EMIT rosShutdown(); // used to signal the gui for a shutdown (useful to roslaunch)
 }
 
 void QNode::setMode(uchar mode)
@@ -113,15 +123,13 @@ void QNode::myCallback_img(const sensor_msgs::ImageConstPtr &msg)
     {
         cv_ptrRGB = cv_bridge::toCvCopy(msg);
         img = cv_ptrRGB->image;
-        image = QImage(img.data,img.cols,img.rows,img.step[0],QImage::Format_RGB888);//change  to QImage format
 
         vpImageConvert::convert(img, orignal_I);
 
-        visionalgorithm visionalg(orignal_I);
+        visionalgorithm visionalg(orignal_I, img);
 
         switch(function_mode){
             case Calib_Index:
-
                 break;
             case Calib_Extern:
 
@@ -132,6 +140,9 @@ void QNode::myCallback_img(const sensor_msgs::ImageConstPtr &msg)
             case Detec_TBox:
                 visionalg.detection_object_mbt();
                 break;
+            case Detec_april_tag:
+                visionalg.aprilTagDetection();
+                break;
             case Track_Blob:
 
                 break;
@@ -141,24 +152,9 @@ void QNode::myCallback_img(const sensor_msgs::ImageConstPtr &msg)
             default:
                 break;
         }
-//        if (!vp_blob_init_done) {
-//            vpDisplay::displayText(orignal_I, vpImagePoint(10, 10), "Click in the blob to initialize the tracker", vpColor::green);
-//            if (vpDisplay::getClick(orignal_I, germ, false)) {
-//            blob.initTracking(orignal_I, germ);
-//            vp_blob_init_done = true;
-//            }
-//        }
-//        else {
-//            blob.track(orignal_I);
-//        }
-
-//        vpDisplay::setTitle(orignal_I, "My image");
-//        vpDisplay::display(orignal_I);
-//        //vpDisplay::displayPoint(I, I.getHeight() / 2, I.getWidth() / 2, vpColor::red, 2);
-//        vpDisplay::flush(orignal_I);
-
         vpImageConvert::convert(orignal_I,vpimg);
         vpimage = QImage(vpimg.data,vpimg.cols,vpimg.rows,QImage::Format_Indexed8);//change  to QImage format
+        image = QImage(img.data,img.cols,img.rows,img.step[0],QImage::Format_RGB888);//change  to QImage format RGB
         Q_EMIT loggingCamera();
         cv::waitKey(100);
     }
@@ -197,8 +193,7 @@ void QNode::myCallback_depth(const sensor_msgs::ImageConstPtr &msg)
                    if(dph.at<unsigned short>(x,y) != 0) {
                        p_depth_argb[idx++] = 255*(1-fscale);    //蓝色分量
                        p_depth_argb[idx++] = 0; //绿色分量
-                       p_depth_argb[idx++] = 255*fscale
-                               ;   //红色分量，越远越红
+                       p_depth_argb[idx++] = 255*fscale;   //红色分量，越远越红
                        p_depth_argb[idx++] = 255*(1-fscale); //距离越近，越不透明
                    }
                    else {
@@ -294,25 +289,6 @@ void QNode::depthnearestFiltering(cv::Mat & depthSrc)
     tempImage.release();
 }
 
-void QNode::run()
-{
-    ros::Rate loop_rate(1);
-    ros::NodeHandle n;
-    image_transport::ImageTransport it(n);
-    image_transport::Subscriber image_sub;
-    image_sub = it.subscribe("/kinect2/qhd/image_color",1,&QNode::myCallback_img,this);
-    image_transport::Subscriber depth_sub;
-    depth_sub = it.subscribe("/kinect2/sd/image_depth",1,&QNode::myCallback_depth,this);
-    ros::spin();
-    loop_rate.sleep();
-    std::cout << "Ros shutdown, proceeding to close the gui." << std::endl;
-    Q_EMIT rosShutdown(); // used to signal the gui for a shutdown (useful to roslaunch)
-}
-
-void QNode::calibrationExt()
-{
-
-}
 
 void QNode::log(const LogLevel &level, const std::string &msg)
 {

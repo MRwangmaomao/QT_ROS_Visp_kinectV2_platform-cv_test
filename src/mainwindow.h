@@ -42,6 +42,8 @@ private slots:
 
     void on_pushButtonDetection_clicked();
 
+    void on_pushButtonKinectV2_clicked();
+
 private:
     Ui::MainWindow *ui;
     QNode qnode;

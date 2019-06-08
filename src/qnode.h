@@ -86,10 +86,12 @@ public:
 
     enum ModeFunc
     {
+        Waiting,
         Calib_Index,
         Calib_Extern,
         Detec_Qbar,
         Detec_TBox,
+        Detec_april_tag,
         Track_Blob,
         Track_Model_Based
     };
@@ -110,8 +112,6 @@ public:
     void depthnearestFiltering(cv::Mat & depthSrc);
 
     void saveimage();
-
-    void calibrationExt();
 
 
 Q_SIGNALS:
@@ -136,7 +136,9 @@ private:
     vpImagePoint germ;
     vpDot2 blob; //2D
     uchar function_mode;
-//    vpDisplayX d;
+    const std::string img_topic;
+    const std::string depth_topic;
+
 };
 
 }  // namespace test_gui

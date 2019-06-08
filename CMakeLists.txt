@@ -12,12 +12,11 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   cv_bridge
   image_transport
+
 )
 find_package(Qt5  REQUIRED COMPONENTS  Widgets  )
 
 find_package(VISP REQUIRED)
-
-find_package(visp_ros REQUIRED)
 
 find_package(OpenCV REQUIRED)
 
@@ -45,10 +44,8 @@ include_directories(
     ${VISP_INCLUDE_DIRS}
 )
 
-include_directories(${visp_ros_INCLUDE_DIRS})
-
  add_executable(cv_disp ${SOURCES} ${FORMS} )
- target_link_libraries(cv_disp  Qt5::Widgets ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${VISP_LIBRARIES} ${visp_ros_LIBRARIES} )
+ target_link_libraries(cv_disp  Qt5::Widgets ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${VISP_LIBRARIES})
 
 
 

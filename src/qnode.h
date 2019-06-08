@@ -43,6 +43,8 @@
 #include <visp3/gui/vpDisplayGDI.h>
 #include <visp3/gui/vpDisplayOpenCV.h>
 #include <visp3/vision/vpPose.h>
+//#include <riki_msgs/grasptask.h>
+
 //#include <visp3/gui/vpDisplayX.h>
 
 /*****************************************************************************
@@ -71,7 +73,7 @@ public:
 
     void myCallback_img(const sensor_msgs::ImageConstPtr &msg);
     void myCallback_depth(const sensor_msgs::ImageConstPtr &msg);
-
+    void myCallback_grasp_start();
     /*********************
     ** Logging
     **********************/
@@ -128,6 +130,8 @@ private:
     cv::Mat vpimg;
     ros::Publisher chatter_publisher;
     ros::Subscriber chatter_subscriber;
+    ros::Subscriber grasp_start_subscriber;
+
     //image_transport::Subscriber img_qhd_subscriber;
     image_transport::Subscriber img_qhd_depth_subscriber;
     QStringListModel logging_model;

@@ -56,9 +56,10 @@ bool QNode::init()
     ros::NodeHandle n;
     image_transport::ImageTransport it(n);
     image_transport::Subscriber image_sub;
-    image_sub = it.subscribe(img_topic,1,&QNode::myCallback_img,this);
+    image_sub = it.subscribe(img_topic,10,&QNode::myCallback_img,this);
     image_transport::Subscriber depth_sub;
-    depth_sub = it.subscribe("/kinect2/sd/image_depth",1,&QNode::myCallback_depth,this);
+    depth_sub = it.subscribe("/kinect2/sd/image_depth",10,&QNode::myCallback_depth,this);
+//    grasp_start_subscriber = n.subscribe("/grasp_start",10,&QNode::myCallback_grasp_start, this);
     start();
     ROS_INFO("I'm Starting!");
 
@@ -79,9 +80,9 @@ bool QNode::init(const std::string &master_url, const std::string &host_url)
     ros::NodeHandle n;
     image_transport::ImageTransport it(n);
     image_transport::Subscriber image_sub;
-    image_sub = it.subscribe(img_topic,1,&QNode::myCallback_img,this);
+    image_sub = it.subscribe(img_topic,10,&QNode::myCallback_img,this);
     image_transport::Subscriber depth_sub;
-    depth_sub = it.subscribe("/kinect2/sd/image_depth",1,&QNode::myCallback_depth,this);
+    depth_sub = it.subscribe("/kinect2/sd/image_depth",10,&QNode::myCallback_depth,this);
     start();
     return true;
 }
@@ -92,9 +93,11 @@ void QNode::run()
     ros::NodeHandle n;
     image_transport::ImageTransport it(n);
     image_transport::Subscriber image_sub;
-    image_sub = it.subscribe(img_topic,1,&QNode::myCallback_img,this);
+    image_sub = it.subscribe(img_topic,10,&QNode::myCallback_img,this);
     image_transport::Subscriber depth_sub;
-    depth_sub = it.subscribe("/kinect2/sd/image_depth",1,&QNode::myCallback_depth,this);
+    depth_sub = it.subscribe("/kinect2/sd/image_depth",10,&QNode::myCallback_depth,this);
+//    grasp_start_subscriber = n.subscribe("/grasp_start",10,&QNode::myCallback_grasp_start, this);
+
     ros::spin();
     loop_rate.sleep();
     std::cout << "Ros shutdown, proceeding to close the gui." << std::endl;
@@ -213,6 +216,11 @@ void QNode::myCallback_depth(const sensor_msgs::ImageConstPtr &msg)
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
+}
+
+void QNode::myCallback_grasp_start()
+{
+    qDebug("I start to grasp.");
 }
 
 void QNode::depthnearestFiltering(cv::Mat & depthSrc)

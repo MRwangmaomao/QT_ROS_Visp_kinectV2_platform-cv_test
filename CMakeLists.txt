@@ -3,16 +3,19 @@ project(cv_test)
 
 add_compile_options(-std=c++11)
 
+
+
 find_package(catkin REQUIRED COMPONENTS
   #catkin_make
   roscpp
   rospy
+    message_generation
   std_msgs
   geometry_msgs
   sensor_msgs
   cv_bridge
   image_transport
-
+#    riki_msgs
 )
 find_package(Qt5  REQUIRED COMPONENTS  Widgets  )
 
@@ -35,7 +38,9 @@ set(FORMS
   src/mainwindow.ui
 )
 
-catkin_package()
+
+
+catkin_package(CATKIN_DEPENDS message_runtime)
 
 include_directories(
     src

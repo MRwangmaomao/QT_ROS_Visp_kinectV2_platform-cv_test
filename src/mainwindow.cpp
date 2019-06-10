@@ -1,10 +1,23 @@
-﻿#include "mainwindow.h"
+﻿/*
+ * author: Peirong Wang
+ * data:2019.6.9
+ * description:arm robot image process and grasp task
+ */
+
+#include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QSettings>
 #include <QMessageBox>
 #include <QDebug>
 #include <QGraphicsView>
 
+
+/**
+ * @brief MainWindow::MainWindow
+ * @param argc
+ * @param argv
+ * @param parent
+ */
 MainWindow::MainWindow(int argc, char** argv, QWidget *parent):
     QMainWindow(parent),
     ui(new Ui::MainWindow),
@@ -34,15 +47,25 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent):
 
     QObject::connect(&qnode,&QNode::loggingDepthCamera,this,&MainWindow::updateLogDepthcamera);
 
-
+    connect(ui->pushButton_grasp_end,&QPushButton::clicked,[=](){
+        qnode.grasp_end();
+    });
 
 }
 
+/**
+ * @brief MainWindow::~MainWindow
+ */
 MainWindow::~MainWindow()
 {
     delete ui;
 }
 
+/**
+ * @brief MainWindow::displayCamera
+ * @param image
+ * @param vpimage
+ */
 void MainWindow::displayCamera(const QImage &image, const QImage &vpimage)
 {
     qimage_mutex_.lock();
@@ -55,6 +78,10 @@ void MainWindow::displayCamera(const QImage &image, const QImage &vpimage)
     qimage_mutex_.unlock();
 }
 
+/**
+ * @brief MainWindow::displayDepthCamera
+ * @param depth
+ */
 void MainWindow::displayDepthCamera(const QImage &depth)
 {
     qdepth_mutex_.lock();
@@ -65,11 +92,17 @@ void MainWindow::displayDepthCamera(const QImage &depth)
     qdepth_mutex_.unlock();
 }
 
+/**
+ * @brief MainWindow::updateLogcamera
+ */
 void MainWindow::updateLogcamera()
 {
     displayCamera(qnode.image, qnode.vpimage);
 }
 
+/**
+ * @brief MainWindow::updateLogDepthcamera
+ */
 void MainWindow::updateLogDepthcamera()
 {
     displayDepthCamera(qnode.depth);
@@ -105,6 +138,9 @@ void MainWindow::on_pushButtonCalibration_clicked()
 
 }
 
+/**
+ * @brief MainWindow::on_pushButtonTracking_clicked
+ */
 void MainWindow::on_pushButtonTracking_clicked()
 {
     ui->pushButtonTracking->setStyleSheet("background-color: rgb(175,238,238)");
@@ -122,6 +158,9 @@ void MainWindow::on_pushButtonTracking_clicked()
     }
 }
 
+/**
+ * @brief MainWindow::on_pushButtonDetection_clicked
+ */
 void MainWindow::on_pushButtonDetection_clicked()
 {
     ui->pushButtonDetection->setStyleSheet("background-color: rgb(175,238,238)");
@@ -145,7 +184,11 @@ void MainWindow::on_pushButtonDetection_clicked()
     }
 }
 
+/**
+ * @brief MainWindow::on_pushButtonKinectV2_clicked
+ */
 void MainWindow::on_pushButtonKinectV2_clicked()
 {
     system("gnome-terminal -x zsh -c 'source ~/catkin_kinect/devel/setup.zsh;roslaunch kinect2_bridge kinect2_bridge.launch limited:=true'&");
 }
+

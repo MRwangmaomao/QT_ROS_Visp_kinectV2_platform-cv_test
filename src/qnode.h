@@ -20,6 +20,7 @@
 #include <QThread>
 #include <QStringListModel>
 #include <sensor_msgs/Image.h>
+#include <std_msgs/Bool.h>
 #include <cv_bridge/cv_bridge.h>
 #include <QImage>
 #include <opencv2/core/core.hpp>
@@ -65,15 +66,6 @@ public:
     QImage depth;
     vpImage<unsigned char> orignal_I;
 
-    QNode(int argc, char** argv);
-    virtual ~QNode();
-    bool init();
-    bool init(const std::string &master_url, const std::string &host_url);
-    void run();
-
-    void myCallback_img(const sensor_msgs::ImageConstPtr &msg);
-    void myCallback_depth(const sensor_msgs::ImageConstPtr &msg);
-    void myCallback_grasp_start();
     /*********************
     ** Logging
     **********************/
@@ -98,6 +90,27 @@ public:
         Track_Model_Based
     };
 
+    typedef struct GraspPose
+    {
+        double x;
+        double y;
+        double z;
+        double roll;
+        double pitch;
+        double yaw;
+    }GraspPose;
+
+
+    QNode(int argc, char** argv);
+    virtual ~QNode();
+    bool init();
+    bool init(const std::string &master_url, const std::string &host_url);
+    void run();
+
+    void myCallback_img(const sensor_msgs::ImageConstPtr &msg);
+    void myCallback_depth(const sensor_msgs::ImageConstPtr &msg);
+    void myCallback_grasp_start(const std_msgs::BoolConstPtr & msg);
+
     void setMode(uchar);
 
     QStringListModel* loggingModel()
@@ -115,7 +128,9 @@ public:
 
     void saveimage();
 
+    void grasp_end();
 
+    GraspPose grasp_pose;
 Q_SIGNALS:
     void loggingUpdated();
     void loggingListen();
@@ -128,21 +143,18 @@ private:
     cv::Mat img;
     cv::Mat dph;
     cv::Mat vpimg;
-    ros::Publisher chatter_publisher;
-    ros::Subscriber chatter_subscriber;
     ros::Subscriber grasp_start_subscriber;
+    ros::Publisher grasp_end_publish;
+    bool grasp_state;
+    bool turn_flag;
 
-    //image_transport::Subscriber img_qhd_subscriber;
-    image_transport::Subscriber img_qhd_depth_subscriber;
     QStringListModel logging_model;
     QStringListModel logging_listen;
-    bool vp_blob_init_done;
     vpImagePoint germ;
     vpDot2 blob; //2D
     uchar function_mode;
     const std::string img_topic;
     const std::string depth_topic;
-
 };
 
 }  // namespace test_gui

@@ -5,11 +5,19 @@
 #include <iostream>
 #include <sstream>
 
+/**
+ * @brief visionalgorithm::visionalgorithm
+ * @param vp_src
+ * @param img_src
+ */
 visionalgorithm::visionalgorithm(vpImage<unsigned char> &vp_src, cv::Mat &img_src):I(vp_src),img(img_src)
 {
     cam.initPersProjWithoutDistortion(571.831982, 568.547768, 436.7418039, 259.987286);
 }
 
+/**
+ * @brief visionalgorithm::bar_code_detection
+ */
 void visionalgorithm::bar_code_detection()
 {
     vpDetectorBase *detector = NULL;
@@ -53,13 +61,20 @@ void visionalgorithm::bar_code_detection()
        delete detector;
 }
 
+/**
+ * @brief visionalgorithm::detection_object_mbt
+ */
 void visionalgorithm::detection_object_mbt()
 {
 
 }
 
+/**
+ * @brief visionalgorithm::aprilTagDetection
+ */
 void visionalgorithm::aprilTagDetection()
 {
+
     vpDetectorAprilTag::vpAprilTagFamily tagFamily = vpDetectorAprilTag::TAG_36h11;
     vpDetectorAprilTag::vpPoseEstimationMethod poseEstimationMethod = vpDetectorAprilTag::HOMOGRAPHY_VIRTUAL_VS;
     double tagSize = 0.053;

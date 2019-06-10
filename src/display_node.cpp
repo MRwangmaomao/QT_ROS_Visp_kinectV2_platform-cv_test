@@ -8,6 +8,12 @@
 #include <mainwindow.h>
 #include <ros/ros.h>
 
+/**
+ * @brief main
+ * @param argc
+ * @param argv
+ * @return
+ */
 int main(int argc, char **argv)
 {
     /*********************
